@@ -8,5 +8,8 @@
     "test": "npm run test -w @trivia-live/game-engine",
     "test:e2e": "playwright test",
     "build": "npm run build -w @trivia-live/web && npm run build -w @trivia-live/show-runner"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.1"
   }
 }
