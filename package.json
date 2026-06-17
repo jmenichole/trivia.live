@@ -1,0 +1,12 @@
+{
+  "name": "trivia-live",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run dev -w @trivia-live/web",
+    "dev:runner": "npm run dev -w @trivia-live/show-runner",
+    "test": "npm run test -w @trivia-live/game-engine",
+    "test:e2e": "playwright test",
+    "build": "npm run build -w @trivia-live/web && npm run build -w @trivia-live/show-runner"
+  }
+}
