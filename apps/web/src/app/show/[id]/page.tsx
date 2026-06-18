@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { participantKey } from "@trivia-live/game-engine";
 import { useShowChannel } from "@/hooks/useShowChannel";
+import { HostAudioStrip } from "@/components/HostAudioStrip";
 import { Lobby } from "@/components/Lobby";
 import { QuestionView } from "@/components/QuestionView";
 import { SpectatorView } from "@/components/SpectatorView";
@@ -44,7 +45,15 @@ export default function ShowPage({
   const [session, setSession] = useState<JoinResult | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
 
-  const { state, error: channelError } = useShowChannel(showId);
+  const { state, hostMode, error: channelError } = useShowChannel(showId);
+
+  const hostAudioStrip =
+    hostMode === "live_audio" && session?.participantId ? (
+      <HostAudioStrip
+        showId={showId}
+        participantId={session.participantId}
+      />
+    ) : null;
 
   // Join (or restore) on mount.
   useEffect(() => {
@@ -108,9 +117,12 @@ export default function ShowPage({
 
   if (!session || !state) {
     return (
-      <main>
-        <p className="subtitle">Connecting…</p>
-      </main>
+      <>
+        <main>
+          <p className="subtitle">Connecting…</p>
+        </main>
+        {hostAudioStrip}
+      </>
     );
   }
 
@@ -118,74 +130,92 @@ export default function ShowPage({
 
   if (phase === "cancelled") {
     return (
-      <main>
-        <h1 className="title">Show Cancelled</h1>
-        <p className="subtitle">This show was cancelled. Check back soon.</p>
-      </main>
+      <>
+        <main>
+          <h1 className="title">Show Cancelled</h1>
+          <p className="subtitle">This show was cancelled. Check back soon.</p>
+        </main>
+        {hostAudioStrip}
+      </>
     );
   }
 
   if (phase === "scheduled" || phase === "lobby") {
     return (
-      <main>
-        <Lobby state={state} />
-      </main>
+      <>
+        <main>
+          <Lobby state={state} />
+        </main>
+        {hostAudioStrip}
+      </>
     );
   }
 
   if (phase === "question") {
     return (
-      <main>
-        {isEliminated ? (
-          <SpectatorView state={state} />
-        ) : (
-          <QuestionView
-            state={state}
-            showId={showId}
-            participantId={session.participantId}
-          />
-        )}
-      </main>
+      <>
+        <main>
+          {isEliminated ? (
+            <SpectatorView state={state} />
+          ) : (
+            <QuestionView
+              state={state}
+              showId={showId}
+              participantId={session.participantId}
+            />
+          )}
+        </main>
+        {hostAudioStrip}
+      </>
     );
   }
 
   if (phase === "reveal") {
     return (
-      <main>
-        <div className="live-section">
-          <p className="show-label live-phase-badge">Reveal</p>
-          <h2 className="question-body">
-            {state.questions[state.questionIndex]?.body}
-          </h2>
-          <p className="subtitle">Results incoming…</p>
-          <div className="show-card live-stat-card">
-            <div className="show-label">Survivors</div>
-            <div className="show-time live-stat-value">
-              {state.survivorCount}
+      <>
+        <main>
+          <div className="live-section">
+            <p className="show-label live-phase-badge">Reveal</p>
+            <h2 className="question-body">
+              {state.questions[state.questionIndex]?.body}
+            </h2>
+            <p className="subtitle">Results incoming…</p>
+            <div className="show-card live-stat-card">
+              <div className="show-label">Survivors</div>
+              <div className="show-time live-stat-value">
+                {state.survivorCount}
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+        {hostAudioStrip}
+      </>
     );
   }
 
   if (phase === "results" || phase === "completed") {
     return (
-      <main>
-        <ResultsView
-          state={state}
-          isEliminated={isEliminated}
-          eliminatedAtQuestion={
-            participantState?.eliminatedAtQuestion ?? null
-          }
-        />
-      </main>
+      <>
+        <main>
+          <ResultsView
+            state={state}
+            isEliminated={isEliminated}
+            eliminatedAtQuestion={
+              participantState?.eliminatedAtQuestion ?? null
+            }
+          />
+        </main>
+        {hostAudioStrip}
+      </>
     );
   }
 
   return (
-    <main>
-      <p className="subtitle">Loading show…</p>
-    </main>
+    <>
+      <main>
+        <p className="subtitle">Loading show…</p>
+      </main>
+      {hostAudioStrip}
+    </>
   );
 }

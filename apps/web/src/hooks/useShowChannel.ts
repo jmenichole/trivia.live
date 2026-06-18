@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import type { HostMode } from "@/lib/hosts";
 import type { ShowRuntimeState } from "@trivia-live/game-engine";
 
 interface UseShowChannelResult {
   state: ShowRuntimeState | null;
+  hostMode: HostMode;
   error: string | null;
 }
 
@@ -18,6 +20,7 @@ interface UseShowChannelResult {
  */
 export function useShowChannel(showId: string): UseShowChannelResult {
   const [state, setState] = useState<ShowRuntimeState | null>(null);
+  const [hostMode, setHostMode] = useState<HostMode>("off");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,7 +31,7 @@ export function useShowChannel(showId: string): UseShowChannelResult {
     // Initial fetch so we don't wait for the first change event.
     supabase
       .from("shows")
-      .select("current_state")
+      .select("current_state, host_mode")
       .eq("id", showId)
       .single()
       .then(({ data, error: fetchError }) => {
@@ -39,6 +42,7 @@ export function useShowChannel(showId: string): UseShowChannelResult {
         if (data?.current_state) {
           setState(data.current_state as ShowRuntimeState);
         }
+        setHostMode((data?.host_mode as HostMode) ?? "off");
       });
 
     // Realtime subscription – fires whenever the show row is updated.
@@ -53,10 +57,14 @@ export function useShowChannel(showId: string): UseShowChannelResult {
           filter: `id=eq.${showId}`,
         },
         (payload) => {
-          const updated = payload.new as { current_state: ShowRuntimeState };
+          const updated = payload.new as {
+            current_state?: ShowRuntimeState;
+            host_mode?: HostMode;
+          };
           if (updated?.current_state) {
             setState(updated.current_state);
           }
+          setHostMode(updated.host_mode ?? "off");
         },
       )
       .subscribe();
@@ -66,5 +74,5 @@ export function useShowChannel(showId: string): UseShowChannelResult {
     };
   }, [showId]);
 
-  return { state, error };
+  return { state, hostMode, error };
 }
