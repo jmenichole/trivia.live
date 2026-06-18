@@ -12,6 +12,7 @@
     "@supabase/ssr": "^0.6.0",
     "@supabase/supabase-js": "^2.49.0",
     "@trivia-live/game-engine": "*",
+    "livekit-client": "^2.19.2",
     "livekit-server-sdk": "^2.15.4",
     "next": "^15.3.0",
     "react": "^19.0.0",
