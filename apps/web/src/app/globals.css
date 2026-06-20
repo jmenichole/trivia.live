@@ -399,3 +399,121 @@ main {
 .admin-back-link {
   margin-top: 2rem;
 }
+
+.admin-host-badge {
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  border: 1px solid color-mix(in srgb, #f59e0b 40%, transparent);
+  border-radius: 9999px;
+  color: #f59e0b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.15rem 0.6rem;
+  text-transform: uppercase;
+}
+
+/* ── Host Console ─────────────────────────────────────────────────────────── */
+
+.host-layout {
+  margin: 0 auto;
+  max-width: 40rem;
+  padding: 1.5rem;
+}
+
+.host-console h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
+.host-phase {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
+}
+
+.host-live-badge {
+  color: #22c55e;
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-top: 1rem;
+}
+
+.host-error {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin: 0.75rem 0 0;
+}
+
+.host-script {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.host-script h2 {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+}
+
+.host-script p {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 1rem;
+}
+
+.host-script ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.host-script li {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  padding: 0.625rem 0.875rem;
+}
+
+/* ── Player host audio strip ──────────────────────────────────────────────── */
+
+.host-audio-strip {
+  align-items: center;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  bottom: 0;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  left: 0;
+  padding: 0.75rem 1rem;
+  position: fixed;
+  right: 0;
+  z-index: 50;
+}
+
+.host-audio-strip .btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.host-audio-strip .btn-ghost:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.host-audio-error {
+  color: #ef4444;
+  font-size: 0.875rem;
+}

@@ -19,6 +19,7 @@ export function CreateShowForm() {
     const formData = new FormData(form);
     const scheduledAt = formData.get("scheduled_at") as string;
     const theme = formData.get("theme") as string;
+    const liveAudioHost = formData.get("live_audio_host") === "on";
 
     const res = await fetch("/api/admin/shows", {
       method: "POST",
@@ -27,6 +28,7 @@ export function CreateShowForm() {
         scheduled_at: new Date(scheduledAt).toISOString(),
         question_set_id: ALPHA_QUESTION_SET_ID,
         theme: theme || "general",
+        host_mode: liveAudioHost ? "live_audio" : "off",
       }),
     });
 
@@ -72,6 +74,10 @@ export function CreateShowForm() {
           readOnly
           disabled
         />
+      </label>
+      <label className="admin-label admin-checkbox">
+        <input type="checkbox" name="live_audio_host" />
+        Live audio host (I&apos;ll read questions on mic)
       </label>
       {error && <p className="admin-error">{error}</p>}
       <button type="submit" className="btn" disabled={submitting}>

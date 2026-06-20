@@ -41,6 +41,16 @@
    - Web app: [http://localhost:3000](http://localhost:3000)
    - Show runner polls Supabase and advances due shows every second (`SHOW_RUNNER_POLL_MS`).
 
+## Live audio hosting
+
+Optional LiveKit integration lets a host read questions on mic while players subscribe to audio on the show page. The show runner is unchanged — only shows created with **Live audio host** enabled use LiveKit.
+
+1. Create a [LiveKit Cloud](https://cloud.livekit.io) project and copy the API key, secret, and WebSocket URL.
+2. Add `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL`, and `HOST_USER_IDS` to your local `.env` and to Vercel (see `.env.example`). Admins (`ADMIN_USER_IDS`) can always access the Host Console; add extra host UUIDs to `HOST_USER_IDS` if needed.
+3. In `/admin`, schedule a show and check **Live audio host (I'll read questions on mic)**.
+4. Before the show, open `/host/show/{id}`, click **Go live (enable mic)**, and grant microphone permission.
+5. Players on `/show/{id}` tap **Tap to hear the host** to subscribe to host audio (required on mobile for autoplay policy).
+
 ## Documentation
 
 - [Design spec](docs/superpowers/specs/2026-06-17-trivia-live-design.md)

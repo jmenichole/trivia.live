@@ -7,6 +7,7 @@ type Show = {
   scheduled_at: string;
   status: string;
   theme: string;
+  host_mode: string;
 };
 
 export default async function AdminPage() {
@@ -16,7 +17,7 @@ export default async function AdminPage() {
   if (supabase) {
     const { data, error } = await supabase
       .from("shows")
-      .select("id, scheduled_at, status, theme")
+      .select("id, scheduled_at, status, theme, host_mode")
       .order("scheduled_at", { ascending: false });
 
     if (!error && data) {
@@ -49,6 +50,12 @@ export default async function AdminPage() {
                   {show.status}
                 </span>
                 <span className="admin-show-theme">{show.theme}</span>
+                {show.host_mode === "live_audio" && (
+                  <span className="admin-host-badge">Live host</span>
+                )}
+                <Link href={`/host/show/${show.id}`} className="admin-host-link">
+                  Host console
+                </Link>
               </li>
             ))}
           </ul>
