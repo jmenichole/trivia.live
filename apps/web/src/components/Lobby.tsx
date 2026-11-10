@@ -1,12 +1,14 @@
 "use client";
 
-import type { ShowRuntimeState } from "@trivia-live/game-engine";
+import type { PublicShowState } from "@trivia-live/game-engine";
 
 interface LobbyProps {
-  state: ShowRuntimeState;
+  state: PublicShowState;
+  /** Extra-life card etc., rendered under the player count. */
+  children?: React.ReactNode;
 }
 
-export function Lobby({ state }: LobbyProps) {
+export function Lobby({ state, children }: LobbyProps) {
   return (
     <div className="live-section">
       <p className="show-label live-phase-badge">Lobby</p>
@@ -15,8 +17,10 @@ export function Lobby({ state }: LobbyProps) {
 
       <div className="show-card live-stat-card">
         <div className="show-label">Players waiting</div>
-        <div className="show-time live-stat-value">{state.survivorCount}</div>
+        <div className="show-time live-stat-value">{state.playerCount}</div>
       </div>
+
+      {children}
 
       <div className="live-pulse-row">
         <span className="live-dot" aria-hidden="true" />

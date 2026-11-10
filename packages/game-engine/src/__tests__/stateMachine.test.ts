@@ -20,6 +20,19 @@ const questions: Question[] = [
     difficulty: 1,
     category: "tech",
   },
+  // A second question so Q1 isn't the final one (extra lives never apply
+  // on the final question).
+  {
+    orderIndex: 2,
+    body: "Which planet is closest to the sun?",
+    choices: [
+      { id: "a", text: "Mercury" },
+      { id: "b", text: "Venus" },
+    ],
+    correctChoiceId: "a",
+    difficulty: 1,
+    category: "science",
+  },
 ];
 
 describe("createInitialState", () => {

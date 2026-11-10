@@ -30,7 +30,7 @@ export default async function HomePage() {
   return (
     <main>
       <h1 className="title">trivia.live</h1>
-      <p className="subtitle">Live trivia. Virtual points. No cash.</p>
+      <p className="subtitle">Live trivia. Free to play. No purchase necessary.</p>
 
       {show ? (
         <div className="show-card">
@@ -50,8 +50,6 @@ export default async function HomePage() {
       ) : (
         <p className="empty-state">No upcoming shows. Check back soon.</p>
       )}
-
-      <footer className="footer">Part of the TiltCheck ecosystem</footer>
     </main>
   );
 }

@@ -517,3 +517,201 @@ main {
   color: #ef4444;
   font-size: 0.875rem;
 }
+
+/* ── Sign-in ─────────────────────────────────────────────────────────── */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-discord {
+  background: #5865f2;
+  width: 100%;
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-divider {
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  margin: 1.25rem 0 0;
+  text-align: center;
+}
+
+.login-userid {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  word-break: break-all;
+}
+
+.login-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ── Reveal ──────────────────────────────────────────────────────────── */
+.choice-correct {
+  border-color: #16a34a !important;
+  background: color-mix(in srgb, #16a34a 18%, transparent) !important;
+}
+
+.choice-wrong {
+  border-color: #dc2626 !important;
+  background: color-mix(in srgb, #dc2626 18%, transparent) !important;
+}
+
+.choice-tag {
+  float: right;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+
+.reveal-verdict {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.reveal-good { color: #22c55e; }
+.reveal-bad { color: #ef4444; }
+.reveal-neutral { color: var(--text-muted); }
+
+.reveal-points {
+  color: var(--accent);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ── Leaderboard ─────────────────────────────────────────────────────── */
+.leaderboard {
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.leaderboard th,
+.leaderboard td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.25rem;
+  text-align: left;
+}
+
+.leaderboard th {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.leaderboard .num {
+  text-align: right;
+}
+
+.leaderboard-winner td {
+  color: #facc15;
+}
+
+/* ── Extra lives ─────────────────────────────────────────────────────── */
+.extra-life-card {
+  text-align: left;
+}
+
+.extra-life-ready {
+  color: #f43f5e;
+  font-weight: 600;
+}
+
+.extra-life-help {
+  font-size: 0.875rem;
+}
+
+.extra-life-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ad-overlay {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 50;
+}
+
+.ad-box {
+  background: #111;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  max-width: 22rem;
+  padding: 1.5rem;
+  text-align: center;
+  width: 90%;
+}
+
+.ad-countdown {
+  font-size: 3rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+/* ── Footer / rules ──────────────────────────────────────────────────── */
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin: 3rem auto 0;
+  max-width: 32rem;
+  padding: 1rem 1.5rem 2rem;
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0.25rem 0;
+}
+
+.site-footer-links {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.site-footer a {
+  color: var(--text-muted);
+}
+
+.rules-page h2 {
+  font-size: 1.125rem;
+  margin-top: 1.75rem;
+}
+
+.rules-page p {
+  color: var(--text-muted);
+}
+
+.rules-draft {
+  background: color-mix(in srgb, #facc15 15%, transparent);
+  border: 1px solid #a16207;
+  border-radius: 0.5rem;
+  color: #fde68a !important;
+  padding: 0.5rem 0.75rem;
+}
+
+.rules-placeholder {
+  background: color-mix(in srgb, #facc15 25%, transparent);
+  border-radius: 0.25rem;
+  color: #fde68a;
+  padding: 0 0.2rem;
+}

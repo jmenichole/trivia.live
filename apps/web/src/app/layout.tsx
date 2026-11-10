@@ -1,16 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "trivia.live",
-  description: "Live trivia. Virtual points. No cash.",
+  description: "Live trivia. Free to play. No purchase necessary.",
   manifest: "/manifest.json",
-  themeColor: "#7c3aed",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "trivia.live",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#7c3aed",
 };
 
 export default function RootLayout({
@@ -20,7 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

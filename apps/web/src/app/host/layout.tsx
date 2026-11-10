@@ -8,12 +8,13 @@ export default async function HostLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  if (!supabase) redirect("/");
+  if (!supabase) redirect("/login?error=not_configured");
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!isHostUser(user?.id)) redirect("/");
+  if (!user) redirect("/login?next=/admin");
+  if (!isHostUser(user.id)) redirect("/login?error=forbidden");
 
   return <div className="host-layout">{children}</div>;
 }

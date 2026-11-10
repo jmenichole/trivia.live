@@ -1,39 +1,20 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { participantKey } from "@trivia-live/game-engine";
 import { useShowChannel } from "@/hooks/useShowChannel";
+import { useMyStatus } from "@/hooks/useMyStatus";
+import {
+  loadSession,
+  saveSession,
+  type JoinResult,
+} from "@/lib/participantSession";
 import { HostAudioStrip } from "@/components/HostAudioStrip";
 import { Lobby } from "@/components/Lobby";
 import { QuestionView } from "@/components/QuestionView";
 import { SpectatorView } from "@/components/SpectatorView";
 import { ResultsView } from "@/components/ResultsView";
-
-interface JoinResult {
-  participantId: string;
-  guestToken: string;
-}
-
-function storageKey(showId: string) {
-  return `show-participant:${showId}`;
-}
-
-function loadSession(showId: string): JoinResult | null {
-  try {
-    const raw = sessionStorage.getItem(storageKey(showId));
-    return raw ? (JSON.parse(raw) as JoinResult) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveSession(showId: string, data: JoinResult) {
-  try {
-    sessionStorage.setItem(storageKey(showId), JSON.stringify(data));
-  } catch {
-    // sessionStorage unavailable (private browsing edge case).
-  }
-}
+import { RevealView } from "@/components/RevealView";
+import { ExtraLifeCard } from "@/components/ExtraLifeCard";
 
 export default function ShowPage({
   params,
@@ -63,7 +44,13 @@ export default function ShowPage({
       return;
     }
 
-    fetch(`/api/shows/${showId}/join`, { method: "POST" })
+    // A friend's invite link (?ref=CODE) earns them a free extra life.
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    fetch(`/api/shows/${showId}/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(ref ? { ref } : {}),
+    })
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -82,18 +69,17 @@ export default function ShowPage({
       });
   }, [showId]);
 
-  // Determine if this participant has been eliminated.
-  const myKey =
-    session?.guestToken != null
-      ? participantKey({ playerId: null, guestToken: session.guestToken })
-      : null;
+  // Our own status comes from the server (the broadcast state carries no
+  // participant data). Re-fetch on every phase / question change.
+  const { me, reload: reloadMe } = useMyStatus(
+    showId,
+    session,
+    state ? `${state.phase}:${state.questionIndex}` : "none",
+  );
 
-  const participantState =
-    myKey && state ? state.participants[myKey] : undefined;
-
-  const isEliminated =
-    participantState?.eliminatedAtQuestion !== null &&
-    participantState?.eliminatedAtQuestion !== undefined;
+  const isEliminated = me?.eliminatedAtQuestion != null;
+  // Late joiners watch only (they're not counted as players).
+  const isSpectator = me?.spectator === true || session?.spectator === true;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -144,7 +130,14 @@ export default function ShowPage({
     return (
       <>
         <main>
-          <Lobby state={state} />
+          <Lobby state={state}>
+            <ExtraLifeCard
+              showId={showId}
+              session={session}
+              me={me}
+              onChange={reloadMe}
+            />
+          </Lobby>
         </main>
         {hostAudioStrip}
       </>
@@ -155,13 +148,13 @@ export default function ShowPage({
     return (
       <>
         <main>
-          {isEliminated ? (
-            <SpectatorView state={state} />
+          {isEliminated || isSpectator ? (
+            <SpectatorView state={state} lateJoiner={isSpectator} />
           ) : (
             <QuestionView
               state={state}
               showId={showId}
-              participantId={session.participantId}
+              session={session}
             />
           )}
         </main>
@@ -174,19 +167,14 @@ export default function ShowPage({
     return (
       <>
         <main>
-          <div className="live-section">
-            <p className="show-label live-phase-badge">Reveal</p>
-            <h2 className="question-body">
-              {state.questions[state.questionIndex]?.body}
-            </h2>
-            <p className="subtitle">Results incoming…</p>
-            <div className="show-card live-stat-card">
-              <div className="show-label">Survivors</div>
-              <div className="show-time live-stat-value">
-                {state.survivorCount}
-              </div>
-            </div>
-          </div>
+          <RevealView state={state} me={me} isSpectator={isSpectator}>
+            <ExtraLifeCard
+              showId={showId}
+              session={session}
+              me={me}
+              onChange={reloadMe}
+            />
+          </RevealView>
         </main>
         {hostAudioStrip}
       </>
@@ -200,8 +188,11 @@ export default function ShowPage({
           <ResultsView
             state={state}
             isEliminated={isEliminated}
+            isSpectator={isSpectator}
+            showId={showId}
+            pointsEarned={me?.pointsEarned ?? null}
             eliminatedAtQuestion={
-              participantState?.eliminatedAtQuestion ?? null
+              me?.eliminatedAtQuestion ?? null
             }
           />
         </main>

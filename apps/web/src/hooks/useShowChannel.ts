@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { HostMode } from "@/lib/hosts";
-import type { ShowRuntimeState } from "@trivia-live/game-engine";
+import type { PublicShowState } from "@trivia-live/game-engine";
 
 interface UseShowChannelResult {
-  state: ShowRuntimeState | null;
+  state: PublicShowState | null;
   hostMode: HostMode;
   error: string | null;
 }
@@ -14,12 +14,15 @@ interface UseShowChannelResult {
 /**
  * Subscribes to real-time updates for a show row.
  *
+ * `current_state` on the shows row is the public projection only: the
+ * current question, and its correct answer only once it is revealed.
+ *
  * Prerequisites:
  *   - In the Supabase dashboard go to Database → Replication and enable
  *     the `shows` table for realtime so postgres_changes events are emitted.
  */
 export function useShowChannel(showId: string): UseShowChannelResult {
-  const [state, setState] = useState<ShowRuntimeState | null>(null);
+  const [state, setState] = useState<PublicShowState | null>(null);
   const [hostMode, setHostMode] = useState<HostMode>("off");
   const [error, setError] = useState<string | null>(null);
 
@@ -39,8 +42,8 @@ export function useShowChannel(showId: string): UseShowChannelResult {
           setError(fetchError.message);
           return;
         }
-        if (data?.current_state) {
-          setState(data.current_state as ShowRuntimeState);
+        if ((data?.current_state as PublicShowState | null)?.showId) {
+          setState(data.current_state as PublicShowState);
         }
         setHostMode((data?.host_mode as HostMode) ?? "off");
       });
@@ -58,10 +61,10 @@ export function useShowChannel(showId: string): UseShowChannelResult {
         },
         (payload) => {
           const updated = payload.new as {
-            current_state?: ShowRuntimeState;
+            current_state?: PublicShowState;
             host_mode?: HostMode;
           };
-          if (updated?.current_state) {
+          if (updated?.current_state?.showId) {
             setState(updated.current_state);
           }
           setHostMode(updated.host_mode ?? "off");

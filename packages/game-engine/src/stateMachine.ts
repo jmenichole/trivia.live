@@ -5,6 +5,7 @@ import type {
   ShowRuntimeState,
   Question,
 } from "./types";
+import { canUseExtraLife } from "./extraLives";
 
 export function participantKey(p: {
   playerId: string | null;
@@ -79,10 +80,13 @@ export function submitAnswer(
 
   if (correct) return state;
 
-  if (participant.extraLifeAvailable && !participant.extraLifeUsed) {
+  // Missed (wrong or no answer): an extra life saves the player before the
+  // next question opens, except on the final question.
+  if (canUseExtraLife(participant, answer.questionIndex, state.questions.length)) {
     const updated: ParticipantState = {
       ...participant,
       extraLifeUsed: true,
+      extraLifeUsedAtQuestion: answer.questionIndex + 1,
     };
     return {
       ...state,
