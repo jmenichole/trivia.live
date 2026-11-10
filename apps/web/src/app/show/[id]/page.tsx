@@ -14,6 +14,7 @@ import { QuestionView } from "@/components/QuestionView";
 import { SpectatorView } from "@/components/SpectatorView";
 import { ResultsView } from "@/components/ResultsView";
 import { RevealView } from "@/components/RevealView";
+import { ExtraLifeCard } from "@/components/ExtraLifeCard";
 
 export default function ShowPage({
   params,
@@ -43,7 +44,13 @@ export default function ShowPage({
       return;
     }
 
-    fetch(`/api/shows/${showId}/join`, { method: "POST" })
+    // A friend's invite link (?ref=CODE) earns them a free extra life.
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    fetch(`/api/shows/${showId}/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(ref ? { ref } : {}),
+    })
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -64,7 +71,7 @@ export default function ShowPage({
 
   // Our own status comes from the server (the broadcast state carries no
   // participant data). Re-fetch on every phase / question change.
-  const { me } = useMyStatus(
+  const { me, reload: reloadMe } = useMyStatus(
     showId,
     session,
     state ? `${state.phase}:${state.questionIndex}` : "none",
@@ -123,7 +130,14 @@ export default function ShowPage({
     return (
       <>
         <main>
-          <Lobby state={state} />
+          <Lobby state={state}>
+            <ExtraLifeCard
+              showId={showId}
+              session={session}
+              me={me}
+              onChange={reloadMe}
+            />
+          </Lobby>
         </main>
         {hostAudioStrip}
       </>
@@ -153,7 +167,14 @@ export default function ShowPage({
     return (
       <>
         <main>
-          <RevealView state={state} me={me} isSpectator={isSpectator} />
+          <RevealView state={state} me={me} isSpectator={isSpectator}>
+            <ExtraLifeCard
+              showId={showId}
+              session={session}
+              me={me}
+              onChange={reloadMe}
+            />
+          </RevealView>
         </main>
         {hostAudioStrip}
       </>

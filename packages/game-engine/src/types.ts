@@ -24,9 +24,12 @@ export interface Question {
 export interface ParticipantState {
   playerId: string | null;
   guestToken: string | null;
+  /** 1-based question number the player was knocked out on; null = still in. */
   eliminatedAtQuestion: number | null;
   extraLifeAvailable: boolean;
   extraLifeUsed: boolean;
+  /** 1-based question number an extra life saved the player on. */
+  extraLifeUsedAtQuestion?: number | null;
 }
 
 export interface ShowRuntimeState {

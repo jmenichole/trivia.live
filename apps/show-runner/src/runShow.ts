@@ -40,6 +40,7 @@ interface ParticipantRow {
   eliminated_at_question: number | null;
   extra_life_available: boolean;
   extra_life_used: boolean;
+  extra_life_used_at_question?: number | null;
 }
 
 function phaseToStatus(phase: string): string {
@@ -205,7 +206,7 @@ async function refreshParticipants(
   const { data, error } = await supabaseAdmin
     .from("show_participants")
     .select(
-      "id, player_id, guest_token, eliminated_at_question, extra_life_available, extra_life_used"
+      "id, player_id, guest_token, eliminated_at_question, extra_life_available, extra_life_used, extra_life_used_at_question"
     )
     .eq("show_id", showId)
     .eq("spectator", false); // late joiners watch only
@@ -224,6 +225,7 @@ async function refreshParticipants(
       eliminatedAtQuestion: p.eliminated_at_question,
       extraLifeAvailable: p.extra_life_available,
       extraLifeUsed: p.extra_life_used,
+      extraLifeUsedAtQuestion: p.extra_life_used_at_question ?? null,
     };
   }
 
@@ -251,13 +253,22 @@ async function applyQuestionEnd(
   // Load all participant id → key mappings for this show
   const { data: parts } = await supabaseAdmin
     .from("show_participants")
-    .select("id, player_id, guest_token")
+    .select("id, player_id, guest_token, extra_life_available")
     .eq("show_id", showId);
 
   const keyById: Record<string, string> = {};
+  // Free extra lives can be earned mid-show (referral / rewarded ad), so
+  // pick up newly granted lives before scoring this question.
+  let participantsWithLives = { ...state.participants };
   for (const p of (parts ?? []) as ParticipantRow[]) {
-    keyById[p.id] = participantKey({ playerId: p.player_id, guestToken: p.guest_token });
+    const key = participantKey({ playerId: p.player_id, guestToken: p.guest_token });
+    keyById[p.id] = key;
+    const ps = participantsWithLives[key];
+    if (ps && p.extra_life_available && !ps.extraLifeAvailable) {
+      participantsWithLives[key] = { ...ps, extraLifeAvailable: true };
+    }
   }
+  state = { ...state, participants: participantsWithLives };
 
   // Load answers submitted during this question
   const { data: answerRows } = await supabaseAdmin
@@ -321,6 +332,7 @@ async function syncEliminations(
       .update({
         eliminated_at_question: ps.eliminatedAtQuestion,
         extra_life_used: ps.extraLifeUsed,
+        extra_life_used_at_question: ps.extraLifeUsedAtQuestion ?? null,
       })
       .eq("id", p.id);
   }

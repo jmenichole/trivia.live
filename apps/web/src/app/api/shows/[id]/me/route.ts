@@ -6,6 +6,8 @@ import {
 } from "@trivia-live/game-engine";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authenticateParticipant } from "@/lib/participantAuth";
+import { earnCheck, loadShowForEarnCheck } from "@/lib/extraLives";
+import { getServerAdProvider } from "@/lib/ads/server";
 
 export const dynamic = "force-dynamic";
 
@@ -80,9 +82,18 @@ export async function GET(
     }
   }
 
+  const earn = spectator
+    ? { ok: false as const }
+    : earnCheck(await loadShowForEarnCheck(admin, showId), p);
+
   return NextResponse.json({
     participantId: p.id,
     spectator,
+    referralCode: spectator ? null : (p.referral_code as string | null) ?? null,
+    extraLifeSource: (p.extra_life_source as string | null) ?? null,
+    extraLifeUsedAtQuestion: (p.extra_life_used_at_question as number | null) ?? null,
+    canEarnExtraLife: earn.ok,
+    adsAvailable: getServerAdProvider() !== null,
     lastAnswer,
     /** Per-answer points (base + speed) so far, before end-of-show bonuses. */
     pointsSoFar,

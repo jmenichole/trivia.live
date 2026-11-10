@@ -618,3 +618,50 @@ main {
 .leaderboard-winner td {
   color: #facc15;
 }
+
+/* ── Extra lives ─────────────────────────────────────────────────────── */
+.extra-life-card {
+  text-align: left;
+}
+
+.extra-life-ready {
+  color: #f43f5e;
+  font-weight: 600;
+}
+
+.extra-life-help {
+  font-size: 0.875rem;
+}
+
+.extra-life-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ad-overlay {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 50;
+}
+
+.ad-box {
+  background: #111;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  max-width: 22rem;
+  padding: 1.5rem;
+  text-align: center;
+  width: 90%;
+}
+
+.ad-countdown {
+  font-size: 3rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}

@@ -12,6 +12,7 @@ export interface MyStatus {
   extraLifeUsedAtQuestion?: number | null;
   extraLifeSource?: "referral" | "rewarded_ad" | null;
   canEarnExtraLife?: boolean;
+  adsAvailable?: boolean;
   referralCode?: string | null;
   pointsEarned: number;
   pointsSoFar?: number;

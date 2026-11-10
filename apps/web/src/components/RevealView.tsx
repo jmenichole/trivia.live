@@ -7,9 +7,10 @@ interface RevealViewProps {
   state: PublicShowState;
   me: MyStatus | null;
   isSpectator: boolean;
+  children?: React.ReactNode;
 }
 
-export function RevealView({ state, me, isSpectator }: RevealViewProps) {
+export function RevealView({ state, me, isSpectator, children }: RevealViewProps) {
   const question = state.currentQuestion;
   if (!question) return null;
 
@@ -94,6 +95,7 @@ export function RevealView({ state, me, isSpectator }: RevealViewProps) {
           <span className="results-of"> / {state.playerCount}</span>
         </div>
       </div>
+      {children}
     </div>
   );
 }
