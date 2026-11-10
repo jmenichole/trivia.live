@@ -1,13 +1,13 @@
 "use client";
 
-import type { ShowRuntimeState } from "@trivia-live/game-engine";
+import type { PublicShowState } from "@trivia-live/game-engine";
 
 interface SpectatorViewProps {
-  state: ShowRuntimeState;
+  state: PublicShowState;
 }
 
 export function SpectatorView({ state }: SpectatorViewProps) {
-  const question = state.questions[state.questionIndex];
+  const question = state.currentQuestion;
 
   if (!question) return null;
 
@@ -17,7 +17,7 @@ export function SpectatorView({ state }: SpectatorViewProps) {
 
       <div className="question-meta">
         <span className="show-label">
-          Question {state.questionIndex + 1} / {state.questions.length}
+          Question {state.questionIndex + 1} / {state.totalQuestions}
         </span>
         <span className="show-label">{question.category}</span>
       </div>

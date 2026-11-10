@@ -1,9 +1,9 @@
 "use client";
 
-import type { ShowRuntimeState } from "@trivia-live/game-engine";
+import type { PublicShowState } from "@trivia-live/game-engine";
 
 interface ResultsViewProps {
-  state: ShowRuntimeState;
+  state: PublicShowState;
   isEliminated: boolean;
   eliminatedAtQuestion: number | null;
 }
@@ -13,7 +13,7 @@ export function ResultsView({
   isEliminated,
   eliminatedAtQuestion,
 }: ResultsViewProps) {
-  const totalPlayers = Object.keys(state.participants).length;
+  const totalPlayers = state.playerCount;
   const survivors = state.survivorCount;
 
   const headline = isEliminated ? "Better luck next time!" : "You survived!";
@@ -33,11 +33,11 @@ export function ResultsView({
         <p className="subtitle">
           You were eliminated at question{" "}
           {eliminatedAtQuestion !== null ? eliminatedAtQuestion + 1 : "?"} of{" "}
-          {state.questions.length}.
+          {state.totalQuestions}.
         </p>
       ) : (
         <p className="subtitle">
-          You made it through all {state.questions.length} questions!
+          You made it through all {state.totalQuestions} questions!
         </p>
       )}
 

@@ -54,3 +54,32 @@ export interface ScoreBreakdown {
   spectatorBonus: number;
   total: number;
 }
+
+/** A question as clients see it: no correct answer. */
+export interface PublicQuestion {
+  orderIndex: number;
+  body: string;
+  choices: Choice[];
+  difficulty: 1 | 2 | 3;
+  category: string;
+}
+
+/**
+ * The only show state broadcast to clients (shows.current_state).
+ * The full ShowRuntimeState lives in the private show_runtime table.
+ */
+export interface PublicShowState {
+  showId: string;
+  phase: ShowPhase;
+  questionIndex: number; // 0-based; -1 before first question
+  phaseStartedAt: string; // ISO
+  totalQuestions: number;
+  questionDurationMs: number;
+  revealDurationMs: number;
+  currentQuestion: PublicQuestion | null;
+  /** null until the current question reaches the reveal phase. */
+  correctChoiceId: string | null;
+  survivorCount: number;
+  /** Players counted in the game (excludes late-joining spectators). */
+  playerCount: number;
+}

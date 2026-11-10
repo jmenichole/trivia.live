@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Room } from "livekit-client";
-import type { ShowRuntimeState } from "@trivia-live/game-engine";
+import type { PublicShowState } from "@trivia-live/game-engine";
 
 export function HostConsole({
   showId,
   state,
 }: {
   showId: string;
-  state: ShowRuntimeState | null;
+  state: PublicShowState | null;
 }) {
   const roomRef = useRef<Room | null>(null);
   const [live, setLive] = useState(false);
@@ -38,10 +38,7 @@ export function HostConsole({
     };
   }, []);
 
-  const q =
-    state && state.questionIndex >= 0
-      ? state.questions[state.questionIndex]
-      : null;
+  const q = state?.currentQuestion ?? null;
 
   return (
     <div className="host-console">

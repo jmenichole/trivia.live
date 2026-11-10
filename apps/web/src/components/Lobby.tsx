@@ -1,9 +1,9 @@
 "use client";
 
-import type { ShowRuntimeState } from "@trivia-live/game-engine";
+import type { PublicShowState } from "@trivia-live/game-engine";
 
 interface LobbyProps {
-  state: ShowRuntimeState;
+  state: PublicShowState;
 }
 
 export function Lobby({ state }: LobbyProps) {
@@ -15,7 +15,7 @@ export function Lobby({ state }: LobbyProps) {
 
       <div className="show-card live-stat-card">
         <div className="show-label">Players waiting</div>
-        <div className="show-time live-stat-value">{state.survivorCount}</div>
+        <div className="show-time live-stat-value">{state.playerCount}</div>
       </div>
 
       <div className="live-pulse-row">

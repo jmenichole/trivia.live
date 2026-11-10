@@ -1,39 +1,18 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { participantKey } from "@trivia-live/game-engine";
 import { useShowChannel } from "@/hooks/useShowChannel";
+import { useMyStatus } from "@/hooks/useMyStatus";
+import {
+  loadSession,
+  saveSession,
+  type JoinResult,
+} from "@/lib/participantSession";
 import { HostAudioStrip } from "@/components/HostAudioStrip";
 import { Lobby } from "@/components/Lobby";
 import { QuestionView } from "@/components/QuestionView";
 import { SpectatorView } from "@/components/SpectatorView";
 import { ResultsView } from "@/components/ResultsView";
-
-interface JoinResult {
-  participantId: string;
-  guestToken: string;
-}
-
-function storageKey(showId: string) {
-  return `show-participant:${showId}`;
-}
-
-function loadSession(showId: string): JoinResult | null {
-  try {
-    const raw = sessionStorage.getItem(storageKey(showId));
-    return raw ? (JSON.parse(raw) as JoinResult) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveSession(showId: string, data: JoinResult) {
-  try {
-    sessionStorage.setItem(storageKey(showId), JSON.stringify(data));
-  } catch {
-    // sessionStorage unavailable (private browsing edge case).
-  }
-}
 
 export default function ShowPage({
   params,
@@ -82,18 +61,15 @@ export default function ShowPage({
       });
   }, [showId]);
 
-  // Determine if this participant has been eliminated.
-  const myKey =
-    session?.guestToken != null
-      ? participantKey({ playerId: null, guestToken: session.guestToken })
-      : null;
+  // Our own status comes from the server (the broadcast state carries no
+  // participant data). Re-fetch on every phase / question change.
+  const { me } = useMyStatus(
+    showId,
+    session,
+    state ? `${state.phase}:${state.questionIndex}` : "none",
+  );
 
-  const participantState =
-    myKey && state ? state.participants[myKey] : undefined;
-
-  const isEliminated =
-    participantState?.eliminatedAtQuestion !== null &&
-    participantState?.eliminatedAtQuestion !== undefined;
+  const isEliminated = me?.eliminatedAtQuestion != null;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -161,7 +137,7 @@ export default function ShowPage({
             <QuestionView
               state={state}
               showId={showId}
-              participantId={session.participantId}
+              session={session}
             />
           )}
         </main>
@@ -177,7 +153,7 @@ export default function ShowPage({
           <div className="live-section">
             <p className="show-label live-phase-badge">Reveal</p>
             <h2 className="question-body">
-              {state.questions[state.questionIndex]?.body}
+              {state.currentQuestion?.body}
             </h2>
             <p className="subtitle">Results incoming…</p>
             <div className="show-card live-stat-card">
@@ -201,7 +177,7 @@ export default function ShowPage({
             state={state}
             isEliminated={isEliminated}
             eliminatedAtQuestion={
-              participantState?.eliminatedAtQuestion ?? null
+              me?.eliminatedAtQuestion ?? null
             }
           />
         </main>

@@ -5,6 +5,10 @@ import {
   applyTimeouts,
   scoreShow,
   participantKey,
+  toPublicState,
+  QUESTION_DURATION_MS,
+  REVEAL_DURATION_MS,
+  RESULTS_DURATION_MS,
   type ShowRuntimeState,
   type Question,
   type ParticipantState,
@@ -14,9 +18,8 @@ import { supabaseAdmin } from "./supabaseAdmin";
 
 // Phase timing constants (milliseconds)
 const LOBBY_WINDOW_MS = 5 * 60 * 1000; // open lobby 5 min before scheduled_at
-const QUESTION_DURATION_MS = 10_000;   // players have 10s to answer
-const REVEAL_DURATION_MS = 3_000;      // show correct answer for 3s
-const RESULTS_DURATION_MS = 30_000;    // leaderboard visible for 30s
+// QUESTION_DURATION_MS / REVEAL_DURATION_MS / RESULTS_DURATION_MS come from
+// @trivia-live/game-engine so the web API enforces the same windows.
 
 interface ShowRow {
   id: string;
@@ -77,18 +80,20 @@ async function processShow(show: ShowRow): Promise<void> {
   const now = new Date();
   const scheduledAt = new Date(show.scheduled_at);
 
-  // Restore or initialise state
-  const raw = show.current_state as Partial<ShowRuntimeState>;
+  // Restore the private runtime state (never stored on the public row).
+  const restored = await loadRuntime(show.id);
   let state: ShowRuntimeState;
-  const isNew = !raw.showId;
+  const isNew = !restored;
 
-  if (isNew) {
+  if (!restored) {
     const questions = await loadQuestions(show.question_set_id);
     if (!questions) return;
     state = createInitialState(show.id, questions);
   } else {
-    state = raw as ShowRuntimeState;
+    state = restored;
   }
+  // Public row missing its projection (fresh migration, manual edit): republish.
+  const publicMissing = !(show.current_state as { showId?: string })?.showId;
 
   const elapsed = now.getTime() - new Date(state.phaseStartedAt).getTime();
   let next: ShowRuntimeState | null = null;
@@ -152,7 +157,7 @@ async function processShow(show: ShowRow): Promise<void> {
 
   if (next) {
     await persistState(show.id, next);
-  } else if (isNew) {
+  } else if (isNew || publicMissing) {
     // Persist initial state so we don't re-initialise every tick
     await persistState(show.id, state);
   }
@@ -353,12 +358,40 @@ async function finalizeScores(showId: string, state: ShowRuntimeState): Promise<
   }
 }
 
+async function loadRuntime(showId: string): Promise<ShowRuntimeState | null> {
+  const { data, error } = await supabaseAdmin
+    .from("show_runtime")
+    .select("state")
+    .eq("show_id", showId)
+    .maybeSingle();
+  if (error) {
+    console.error(`[runner] load runtime ${showId}:`, error.message);
+    throw error; // don't re-initialise a show because of a transient error
+  }
+  const state = (data as { state?: ShowRuntimeState } | null)?.state;
+  return state?.showId ? state : null;
+}
+
 async function persistState(showId: string, state: ShowRuntimeState): Promise<void> {
+  // 1. Full state (questions + answers + participants) → private table.
+  const { error: runtimeError } = await supabaseAdmin
+    .from("show_runtime")
+    .upsert({
+      show_id: showId,
+      state: state as unknown as Record<string, unknown>,
+      updated_at: new Date().toISOString(),
+    });
+  if (runtimeError) {
+    console.error(`[runner] persist runtime ${showId}:`, runtimeError.message);
+    return;
+  }
+
+  // 2. Public projection → shows row (readable by everyone, broadcast via Realtime).
   const { error } = await supabaseAdmin
     .from("shows")
     .update({
       current_phase: state.phase,
-      current_state: state as unknown as Record<string, unknown>,
+      current_state: toPublicState(state) as unknown as Record<string, unknown>,
       status: phaseToStatus(state.phase),
     })
     .eq("id", showId);

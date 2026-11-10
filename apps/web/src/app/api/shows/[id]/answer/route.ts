@@ -7,11 +7,12 @@ export async function POST(
 ) {
   const { id: showId } = await params;
   const body = await req.json();
-  const { participantId, questionIndex, choiceId } = body as {
-    participantId: string;
+  const { questionIndex, choiceId } = body as {
     questionIndex: number;
     choiceId: string;
   };
+
+  const participantId = req.headers.get("x-participant-id");
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
