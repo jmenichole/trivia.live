@@ -19,6 +19,7 @@ export function QuestionView({
   const question = state.currentQuestion;
   const [answered, setAnswered] = useState(false);
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(QUESTION_DURATION_MS);
   const phaseStartRef = useRef(new Date(state.phaseStartedAt).getTime());
 
@@ -29,6 +30,7 @@ export function QuestionView({
     setTimeLeft(Math.max(0, QUESTION_DURATION_MS - elapsed));
     setAnswered(false);
     setSelectedChoice(null);
+    setSubmitError(null);
   }, [state.questionIndex, state.phaseStartedAt]);
 
   // Tick the timer.
@@ -46,7 +48,7 @@ export function QuestionView({
     setSelectedChoice(choiceId);
 
     try {
-      await fetch(`/api/shows/${showId}/answer`, {
+      const res = await fetch(`/api/shows/${showId}/answer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -57,8 +59,12 @@ export function QuestionView({
           choiceId,
         }),
       });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setSubmitError(data.error ?? "Answer not accepted");
+      }
     } catch {
-      // Answer already recorded locally; network error is non-fatal here.
+      setSubmitError("Network error — answer may not have been received");
     }
   }
 
@@ -109,7 +115,10 @@ export function QuestionView({
         })}
       </div>
 
-      {answered && (
+      {answered && submitError && (
+        <p className="answered-msg timed-out">{submitError}</p>
+      )}
+      {answered && !submitError && (
         <p className="answered-msg">
           ✓ Answer submitted — hang tight for the reveal!
         </p>

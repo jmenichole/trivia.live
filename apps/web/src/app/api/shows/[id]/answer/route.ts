@@ -1,62 +1,107 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient as createAdmin } from "@supabase/supabase-js";
+import {
+  answerTiming,
+  isWithinAnswerWindow,
+  participantKey,
+  type ShowRuntimeState,
+} from "@trivia-live/game-engine";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { authenticateParticipant } from "@/lib/participantAuth";
 
+/**
+ * Submit an answer for the current question.
+ *
+ * - The caller must own the participant (guest token or Supabase session).
+ * - The question must be live and within its 10s window (+ small grace),
+ *   measured on the server clock from when the runner opened it.
+ * - First answer wins; answers can't be changed.
+ * - Late joiners (spectators) and knocked-out players can't answer.
+ * - The response never says whether the answer was correct.
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const receivedAt = Date.now();
   const { id: showId } = await params;
-  const body = await req.json();
-  const { questionIndex, choiceId } = body as {
-    questionIndex: number;
-    choiceId: string;
-  };
 
-  const participantId = req.headers.get("x-participant-id");
-
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
-
-  const { data: show } = await admin
-    .from("shows")
-    .select("current_phase, current_state, question_set_id")
-    .eq("id", showId)
-    .single();
-
-  if (!show || show.current_phase !== "question") {
-    return NextResponse.json({ error: "Not accepting answers" }, { status: 400 });
+  let body: { questionIndex?: unknown; choiceId?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const { questionIndex, choiceId } = body;
+  if (typeof questionIndex !== "number" || typeof choiceId !== "string") {
+    return NextResponse.json({ error: "Invalid answer" }, { status: 400 });
   }
 
-  const runtime = show.current_state as { questionIndex: number };
+  const admin = createAdminClient();
+
+  const auth = await authenticateParticipant(req, admin, showId);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const participant = auth.participant;
+
+  const { data: runtimeRow } = await admin
+    .from("show_runtime")
+    .select("state")
+    .eq("show_id", showId)
+    .maybeSingle();
+  const runtime = (runtimeRow as { state?: ShowRuntimeState } | null)?.state;
+
+  if (!runtime || runtime.phase !== "question") {
+    return NextResponse.json({ error: "Not accepting answers" }, { status: 409 });
+  }
   if (runtime.questionIndex !== questionIndex) {
-    return NextResponse.json({ error: "Wrong question" }, { status: 400 });
+    return NextResponse.json({ error: "Wrong question" }, { status: 409 });
   }
 
-  const { data: question } = await admin
-    .from("questions")
-    .select("correct_choice_id")
-    .eq("question_set_id", show.question_set_id)
-    .eq("order_index", questionIndex + 1)
-    .single();
+  const startedAt = Date.parse(runtime.phaseStartedAt);
+  if (!isWithinAnswerWindow(startedAt, receivedAt)) {
+    return NextResponse.json({ error: "Time's up" }, { status: 409 });
+  }
 
-  const correct = choiceId === question?.correct_choice_id;
+  const key = participantKey({
+    playerId: participant.player_id,
+    guestToken: participant.guest_token,
+  });
+  const ps = runtime.participants[key];
+  if (!ps || participant.spectator === true) {
+    return NextResponse.json(
+      { error: "Spectators can't answer" },
+      { status: 403 },
+    );
+  }
+  if (ps.eliminatedAtQuestion !== null || participant.eliminated_at_question !== null) {
+    return NextResponse.json({ error: "You're out" }, { status: 403 });
+  }
 
-  const { error } = await admin.from("answers").upsert(
-    {
-      show_id: showId,
-      participant_id: participantId,
-      question_index: questionIndex,
-      choice_id: choiceId,
-      correct,
-    },
-    { onConflict: "show_id,participant_id,question_index" },
-  );
+  const question = runtime.questions[questionIndex];
+  if (!question || !question.choices.some((c) => c.id === choiceId)) {
+    return NextResponse.json({ error: "Invalid choice" }, { status: 400 });
+  }
+
+  const { elapsedMs, msRemaining } = answerTiming(startedAt, receivedAt);
+
+  const { error } = await admin.from("answers").insert({
+    show_id: showId,
+    participant_id: participant.id,
+    question_index: questionIndex,
+    choice_id: choiceId,
+    correct: choiceId === question.correctChoiceId,
+    answered_at: new Date(receivedAt).toISOString(),
+    answer_ms: elapsedMs,
+    ms_remaining: msRemaining,
+  });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error.code === "23505") {
+      return NextResponse.json({ error: "Already answered" }, { status: 409 });
+    }
+    return NextResponse.json({ error: "Could not record answer" }, { status: 500 });
   }
 
-  return NextResponse.json({ accepted: true });
+  return NextResponse.json({ accepted: true, answerMs: elapsedMs });
 }

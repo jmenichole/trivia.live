@@ -7,6 +7,7 @@ import {
   participantKey,
   toPublicState,
   QUESTION_DURATION_MS,
+  ANSWER_GRACE_MS,
   REVEAL_DURATION_MS,
   RESULTS_DURATION_MS,
   type ShowRuntimeState,
@@ -120,9 +121,10 @@ async function processShow(show: ShowRow): Promise<void> {
       break;
     }
 
-    // ── question → reveal (after 10 s) ──────────────────────────────────
+    // ── question → reveal (after 10 s + the API's grace period, so every
+    //    answer the API accepted is counted) ─────────────────────────────
     case "question": {
-      if (elapsed >= QUESTION_DURATION_MS) {
+      if (elapsed >= QUESTION_DURATION_MS + ANSWER_GRACE_MS) {
         state = await applyQuestionEnd(show.id, state);
         next = advancePhase(state, "reveal");
         console.log(`[runner] ${show.id}: question[${state.questionIndex}]→reveal`);
@@ -315,17 +317,37 @@ async function finalizeScores(showId: string, state: ShowRuntimeState): Promise<
   for (const p of (parts ?? []) as ParticipantRow[]) {
     const { data: answerRows } = await supabaseAdmin
       .from("answers")
-      .select("question_index, correct, answered_at")
+      .select("question_index, correct, answer_ms, ms_remaining")
       .eq("show_id", showId)
       .eq("participant_id", p.id);
 
-    const answers = (answerRows ?? []).map((a) => ({
-      questionIndex: (a as { question_index: number }).question_index,
-      correct: (a as { correct: boolean }).correct,
-      difficulty: (state.questions[(a as { question_index: number }).question_index]?.difficulty ?? 1) as 1 | 2 | 3,
-      // Alpha: use midpoint estimate; accurate speed tracking is post-M1
-      msRemaining: 5_000,
+    type AnswerRow = {
+      question_index: number;
+      correct: boolean;
+      answer_ms: number | null;
+      ms_remaining: number | null;
+    };
+    const rows = (answerRows ?? []) as AnswerRow[];
+
+    const answers = rows.map((a) => ({
+      questionIndex: a.question_index,
+      correct: a.correct,
+      difficulty: (state.questions[a.question_index]?.difficulty ?? 1) as 1 | 2 | 3,
+      // Server-recorded time left on the clock (see /api/shows/[id]/answer).
+      msRemaining: a.ms_remaining ?? 0,
     }));
+
+    // Tie-break input: cumulative answer time over every question the
+    // player faced; a missed question counts as the full window.
+    const faced =
+      p.eliminated_at_question !== null
+        ? p.eliminated_at_question
+        : state.questions.length;
+    const byIndex = new Map(rows.map((a) => [a.question_index, a]));
+    let totalAnswerMs = 0;
+    for (let i = 0; i < faced; i++) {
+      totalAnswerMs += byIndex.get(i)?.answer_ms ?? QUESTION_DURATION_MS;
+    }
 
     const breakdown = scoreShow({
       answers,
@@ -338,7 +360,7 @@ async function finalizeScores(showId: string, state: ShowRuntimeState): Promise<
 
     await supabaseAdmin
       .from("show_participants")
-      .update({ points_earned: points })
+      .update({ points_earned: points, total_answer_ms: totalAnswerMs })
       .eq("id", p.id);
 
     if (p.player_id) {
