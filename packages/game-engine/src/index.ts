@@ -3,3 +3,4 @@ export * from "./constants";
 export * from "./stateMachine";
 export * from "./scoring";
 export * from "./publicState";
+export * from "./leaderboard";

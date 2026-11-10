@@ -553,3 +553,68 @@ main {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* ── Reveal ──────────────────────────────────────────────────────────── */
+.choice-correct {
+  border-color: #16a34a !important;
+  background: color-mix(in srgb, #16a34a 18%, transparent) !important;
+}
+
+.choice-wrong {
+  border-color: #dc2626 !important;
+  background: color-mix(in srgb, #dc2626 18%, transparent) !important;
+}
+
+.choice-tag {
+  float: right;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+
+.reveal-verdict {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.reveal-good { color: #22c55e; }
+.reveal-bad { color: #ef4444; }
+.reveal-neutral { color: var(--text-muted); }
+
+.reveal-points {
+  color: var(--accent);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ── Leaderboard ─────────────────────────────────────────────────────── */
+.leaderboard {
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.leaderboard th,
+.leaderboard td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.25rem;
+  text-align: left;
+}
+
+.leaderboard th {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.leaderboard .num {
+  text-align: right;
+}
+
+.leaderboard-winner td {
+  color: #facc15;
+}

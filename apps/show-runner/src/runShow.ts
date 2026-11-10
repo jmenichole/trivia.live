@@ -146,6 +146,8 @@ async function processShow(show: ShowRow): Promise<void> {
         // advancePhase('question') auto-advances to 'results' when exhausted
         next = advancePhase(state, "question");
         if (next.phase === "results") {
+          // Score before the results screen so players see their points.
+          await finalizeScores(show.id, state);
           console.log(`[runner] ${show.id}: reveal→results`);
         } else {
           console.log(`[runner] ${show.id}: reveal→question[${next.questionIndex}]`);
@@ -157,7 +159,6 @@ async function processShow(show: ShowRow): Promise<void> {
     // ── results → completed (after 30 s) ────────────────────────────────
     case "results": {
       if (elapsed >= RESULTS_DURATION_MS) {
-        await finalizeScores(show.id, state);
         next = advancePhase(state, "completed");
         console.log(`[runner] ${show.id}: results→completed`);
       }
@@ -329,11 +330,15 @@ async function finalizeScores(showId: string, state: ShowRuntimeState): Promise<
   const { data: parts } = await supabaseAdmin
     .from("show_participants")
     .select(
-      "id, player_id, guest_token, eliminated_at_question, extra_life_available, extra_life_used"
+      "id, player_id, guest_token, eliminated_at_question, extra_life_available, extra_life_used, spectator"
     )
     .eq("show_id", showId);
 
-  for (const p of (parts ?? []) as ParticipantRow[]) {
+  for (const p of (parts ?? []) as (ParticipantRow & { spectator: boolean })[]) {
+    // Late joiners / anyone outside the final roster: no score, no prize.
+    const key = participantKey({ playerId: p.player_id, guestToken: p.guest_token });
+    if (p.spectator || !state.participants[key]) continue;
+
     const { data: answerRows } = await supabaseAdmin
       .from("answers")
       .select("question_index, correct, answer_ms, ms_remaining")

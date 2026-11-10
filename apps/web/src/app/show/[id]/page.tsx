@@ -13,6 +13,7 @@ import { Lobby } from "@/components/Lobby";
 import { QuestionView } from "@/components/QuestionView";
 import { SpectatorView } from "@/components/SpectatorView";
 import { ResultsView } from "@/components/ResultsView";
+import { RevealView } from "@/components/RevealView";
 
 export default function ShowPage({
   params,
@@ -152,19 +153,7 @@ export default function ShowPage({
     return (
       <>
         <main>
-          <div className="live-section">
-            <p className="show-label live-phase-badge">Reveal</p>
-            <h2 className="question-body">
-              {state.currentQuestion?.body}
-            </h2>
-            <p className="subtitle">Results incoming…</p>
-            <div className="show-card live-stat-card">
-              <div className="show-label">Survivors</div>
-              <div className="show-time live-stat-value">
-                {state.survivorCount}
-              </div>
-            </div>
-          </div>
+          <RevealView state={state} me={me} isSpectator={isSpectator} />
         </main>
         {hostAudioStrip}
       </>
@@ -179,6 +168,8 @@ export default function ShowPage({
             state={state}
             isEliminated={isEliminated}
             isSpectator={isSpectator}
+            showId={showId}
+            pointsEarned={me?.pointsEarned ?? null}
             eliminatedAtQuestion={
               me?.eliminatedAtQuestion ?? null
             }

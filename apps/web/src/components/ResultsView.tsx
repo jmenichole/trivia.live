@@ -1,11 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import type { PublicShowState } from "@trivia-live/game-engine";
 
 interface ResultsViewProps {
   state: PublicShowState;
   isEliminated: boolean;
   isSpectator?: boolean;
+  showId: string;
+  /** Final points for this show (null while loading). */
+  pointsEarned: number | null;
   /** 1-based question number the player was knocked out on. */
   eliminatedAtQuestion: number | null;
 }
@@ -14,6 +18,8 @@ export function ResultsView({
   state,
   isEliminated,
   isSpectator = false,
+  showId,
+  pointsEarned,
   eliminatedAtQuestion,
 }: ResultsViewProps) {
   const totalPlayers = state.playerCount;
@@ -52,6 +58,28 @@ export function ResultsView({
         </p>
       )}
 
+      {state.correctChoiceId && state.currentQuestion && (
+        <p className="subtitle">
+          Final answer:{" "}
+          <strong>
+            {
+              state.currentQuestion.choices.find(
+                (c) => c.id === state.correctChoiceId,
+              )?.text
+            }
+          </strong>
+        </p>
+      )}
+
+      {!isSpectator && (
+        <div className="show-card live-stat-card">
+          <div className="show-label">Your points</div>
+          <div className="show-time live-stat-value">
+            {pointsEarned ?? "…"}
+          </div>
+        </div>
+      )}
+
       <div className="show-card live-stat-card">
         <div className="show-label">Final survivors</div>
         <div className="show-time live-stat-value">
@@ -70,6 +98,9 @@ export function ResultsView({
           Last one standing — perfect game! 🎉
         </p>
       )}
+      <Link href={`/show/${showId}/leaderboard`} className="btn">
+        View leaderboard
+      </Link>
     </div>
   );
 }
