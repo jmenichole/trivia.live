@@ -665,3 +665,53 @@ main {
   font-weight: 700;
   margin: 0.5rem 0;
 }
+
+/* ── Footer / rules ──────────────────────────────────────────────────── */
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin: 3rem auto 0;
+  max-width: 32rem;
+  padding: 1rem 1.5rem 2rem;
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0.25rem 0;
+}
+
+.site-footer-links {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.site-footer a {
+  color: var(--text-muted);
+}
+
+.rules-page h2 {
+  font-size: 1.125rem;
+  margin-top: 1.75rem;
+}
+
+.rules-page p {
+  color: var(--text-muted);
+}
+
+.rules-draft {
+  background: color-mix(in srgb, #facc15 15%, transparent);
+  border: 1px solid #a16207;
+  border-radius: 0.5rem;
+  color: #fde68a !important;
+  padding: 0.5rem 0.75rem;
+}
+
+.rules-placeholder {
+  background: color-mix(in srgb, #facc15 25%, transparent);
+  border-radius: 0.25rem;
+  color: #fde68a;
+  padding: 0 0.2rem;
+}
