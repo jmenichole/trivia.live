@@ -1,12 +1,16 @@
 {
   "name": "trivia-live",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w @trivia-live/web",
     "dev:runner": "npm run dev -w @trivia-live/show-runner",
-    "test": "npm run test -w @trivia-live/game-engine",
+    "test": "npm run test -w @trivia-live/game-engine && npm run test -w @trivia-live/web",
     "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit -p packages/game-engine && tsc --noEmit -p apps/show-runner && tsc --noEmit -p apps/web",
     "build": "npm run build -w @trivia-live/web && npm run build -w @trivia-live/show-runner"
   },
   "devDependencies": {
