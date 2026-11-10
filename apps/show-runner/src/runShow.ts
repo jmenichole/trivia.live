@@ -19,6 +19,8 @@ import { supabaseAdmin } from "./supabaseAdmin";
 
 // Phase timing constants (milliseconds)
 const LOBBY_WINDOW_MS = 5 * 60 * 1000; // open lobby 5 min before scheduled_at
+// Before the lobby opens, keep the waiting count fresh only within this window.
+const SCHEDULED_COUNT_WINDOW_MS = 60 * 60 * 1000;
 // QUESTION_DURATION_MS / REVEAL_DURATION_MS / RESULTS_DURATION_MS come from
 // @trivia-live/game-engine so the web API enforces the same windows.
 
@@ -107,6 +109,8 @@ async function processShow(show: ShowRow): Promise<void> {
         state = await refreshParticipants(show.id, state);
         next = advancePhase(state, "lobby");
         console.log(`[runner] ${show.id}: scheduled→lobby`);
+      } else if (msUntilShow <= SCHEDULED_COUNT_WINDOW_MS) {
+        next = await refreshIfCountChanged(show.id, state);
       }
       break;
     }
@@ -114,9 +118,13 @@ async function processShow(show: ShowRow): Promise<void> {
     // ── lobby → question (once scheduled_at is past) ────────────────────
     case "lobby": {
       if (now >= scheduledAt) {
+        // Final roster: everyone who joined before Q1 opens is a player.
         state = await refreshParticipants(show.id, state);
         next = advancePhase(state, "question");
-        console.log(`[runner] ${show.id}: lobby→question[0]`);
+        console.log(`[runner] ${show.id}: lobby→question[0] (${Object.keys(state.participants).length} players)`);
+      } else {
+        // Keep the lobby's "players waiting" count live.
+        next = await refreshIfCountChanged(show.id, state);
       }
       break;
     }
@@ -198,7 +206,8 @@ async function refreshParticipants(
     .select(
       "id, player_id, guest_token, eliminated_at_question, extra_life_available, extra_life_used"
     )
-    .eq("show_id", showId);
+    .eq("show_id", showId)
+    .eq("spectator", false); // late joiners watch only
 
   if (error || !data) {
     console.error("[runner] load participants:", error?.message);
@@ -222,6 +231,16 @@ async function refreshParticipants(
   ).length;
 
   return { ...state, participants, survivorCount };
+}
+
+/** Lobby/pre-show: republish only when the joined-player count changed. */
+async function refreshIfCountChanged(
+  showId: string,
+  state: ShowRuntimeState,
+): Promise<ShowRuntimeState | null> {
+  const before = Object.keys(state.participants).length;
+  const refreshed = await refreshParticipants(showId, state);
+  return Object.keys(refreshed.participants).length !== before ? refreshed : null;
 }
 
 async function applyQuestionEnd(

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { participantKey, type ShowRuntimeState } from "@trivia-live/game-engine";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authenticateParticipant } from "@/lib/participantAuth";
 
@@ -17,8 +18,23 @@ export async function GET(
   }
   const p = auth.participant;
 
+  const { data: runtimeRow } = await admin
+    .from("show_runtime")
+    .select("state")
+    .eq("show_id", showId)
+    .maybeSingle();
+  const runtime = (runtimeRow as { state?: ShowRuntimeState } | null)?.state;
+
+  // Once questions start, only participants captured in the runtime play.
+  const started =
+    !!runtime && runtime.phase !== "scheduled" && runtime.phase !== "lobby";
+  const key = participantKey({ playerId: p.player_id, guestToken: p.guest_token });
+  const spectator =
+    p.spectator === true || (started && !runtime!.participants[key]);
+
   return NextResponse.json({
     participantId: p.id,
+    spectator,
     /** 1-based question number the player was knocked out on, or null. */
     eliminatedAtQuestion: p.eliminated_at_question,
     extraLifeAvailable: p.extra_life_available,

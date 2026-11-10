@@ -5,19 +5,26 @@ import type { PublicShowState } from "@trivia-live/game-engine";
 interface ResultsViewProps {
   state: PublicShowState;
   isEliminated: boolean;
+  isSpectator?: boolean;
+  /** 1-based question number the player was knocked out on. */
   eliminatedAtQuestion: number | null;
 }
 
 export function ResultsView({
   state,
   isEliminated,
+  isSpectator = false,
   eliminatedAtQuestion,
 }: ResultsViewProps) {
   const totalPlayers = state.playerCount;
   const survivors = state.survivorCount;
 
-  const headline = isEliminated ? "Better luck next time!" : "You survived!";
-  const emoji = isEliminated ? "💀" : "🏆";
+  const headline = isSpectator
+    ? "Thanks for watching!"
+    : isEliminated
+      ? "Better luck next time!"
+      : "You survived!";
+  const emoji = isSpectator ? "👀" : isEliminated ? "💀" : "🏆";
 
   return (
     <div className="live-section results-section">
@@ -29,11 +36,15 @@ export function ResultsView({
         {emoji} {headline}
       </h1>
 
-      {isEliminated ? (
+      {isSpectator ? (
         <p className="subtitle">
-          You were eliminated at question{" "}
-          {eliminatedAtQuestion !== null ? eliminatedAtQuestion + 1 : "?"} of{" "}
-          {state.totalQuestions}.
+          You joined after the show started. Join the next lobby before the
+          first question to play.
+        </p>
+      ) : isEliminated ? (
+        <p className="subtitle">
+          You were knocked out on question{" "}
+          {eliminatedAtQuestion ?? "?"} of {state.totalQuestions}.
         </p>
       ) : (
         <p className="subtitle">
@@ -49,12 +60,12 @@ export function ResultsView({
         </div>
       </div>
 
-      {!isEliminated && survivors > 1 && (
+      {!isSpectator && !isEliminated && survivors > 1 && (
         <p className="subtitle results-share">
           You&apos;re one of {survivors} survivors — well played!
         </p>
       )}
-      {!isEliminated && survivors === 1 && (
+      {!isSpectator && !isEliminated && survivors === 1 && (
         <p className="subtitle results-share">
           Last one standing — perfect game! 🎉
         </p>

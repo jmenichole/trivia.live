@@ -70,6 +70,8 @@ export default function ShowPage({
   );
 
   const isEliminated = me?.eliminatedAtQuestion != null;
+  // Late joiners watch only (they're not counted as players).
+  const isSpectator = me?.spectator === true || session?.spectator === true;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -131,8 +133,8 @@ export default function ShowPage({
     return (
       <>
         <main>
-          {isEliminated ? (
-            <SpectatorView state={state} />
+          {isEliminated || isSpectator ? (
+            <SpectatorView state={state} lateJoiner={isSpectator} />
           ) : (
             <QuestionView
               state={state}
@@ -176,6 +178,7 @@ export default function ShowPage({
           <ResultsView
             state={state}
             isEliminated={isEliminated}
+            isSpectator={isSpectator}
             eliminatedAtQuestion={
               me?.eliminatedAtQuestion ?? null
             }

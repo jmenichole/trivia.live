@@ -4,9 +4,11 @@ import type { PublicShowState } from "@trivia-live/game-engine";
 
 interface SpectatorViewProps {
   state: PublicShowState;
+  /** Joined after the show started (vs. knocked out). */
+  lateJoiner?: boolean;
 }
 
-export function SpectatorView({ state }: SpectatorViewProps) {
+export function SpectatorView({ state, lateJoiner = false }: SpectatorViewProps) {
   const question = state.currentQuestion;
 
   if (!question) return null;
@@ -34,7 +36,10 @@ export function SpectatorView({ state }: SpectatorViewProps) {
 
       <p className="subtitle spectator-info">
         {state.survivorCount} player{state.survivorCount !== 1 ? "s" : ""} still
-        competing — you can&apos;t answer after being eliminated.
+        competing —{" "}
+        {lateJoiner
+          ? "you joined after the show started, so you're watching this one. Catch the next show from the lobby!"
+          : "you can't answer after being eliminated."}
       </p>
     </div>
   );
