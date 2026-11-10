@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdmin } from "@supabase/supabase-js";
 import { roomNameForShow } from "@/lib/hosts";
+import { isAdminUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -12,11 +13,7 @@ export async function POST(req: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const admins = (process.env.ADMIN_USER_IDS ?? "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
-  if (!user || !admins.includes(user.id)) {
+  if (!user || !isAdminUser(user.id)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

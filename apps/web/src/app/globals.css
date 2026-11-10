@@ -517,3 +517,39 @@ main {
   color: #ef4444;
   font-size: 0.875rem;
 }
+
+/* ── Sign-in ─────────────────────────────────────────────────────────── */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-discord {
+  background: #5865f2;
+  width: 100%;
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-divider {
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  margin: 1.25rem 0 0;
+  text-align: center;
+}
+
+.login-userid {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  word-break: break-all;
+}
+
+.login-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
